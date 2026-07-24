@@ -554,11 +554,10 @@ def verify_otp():
         if user and 'password_hash' in user:
             del user['password_hash']
             
-        import datetime
         token = jwt.encode({
             'user_id': user['id'],
             'role': user['role'],
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+            'exp': datetime.utcnow() + timedelta(days=7)
         }, app.config['SECRET_KEY'], algorithm='HS256')
             
         return jsonify({"success": True, "user": user, "token": token})
@@ -592,11 +591,10 @@ def login():
         if 'password_hash' in user:
             del user['password_hash']
             
-        import datetime
         token = jwt.encode({
             'user_id': user['id'],
             'role': user['role'],
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+            'exp': datetime.utcnow() + timedelta(days=7)
         }, app.config['SECRET_KEY'], algorithm='HS256')
             
         return jsonify({"success": True, "user": user, "token": token})
@@ -649,11 +647,10 @@ def admin_register():
         if user and 'password_hash' in user:
             del user['password_hash']
             
-        import datetime
         token = jwt.encode({
             'user_id': user['id'],
             'role': user['role'],
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+            'exp': datetime.utcnow() + timedelta(days=7)
         }, app.config['SECRET_KEY'], algorithm='HS256')
             
         return jsonify({"success": True, "user": user, "token": token})

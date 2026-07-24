@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Complaints - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .complaint-card {
+      background: rgba(15, 12, 41, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .complaint-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .complaint-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: rgba(15, 12, 41, 0.4);
+      border-radius: var(--radius-lg);
+      border: 1px dashed var(--border-color);
+    }
+    .karma-banner {
+      background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(236,72,153,0.25));
+      border: 1px solid rgba(139,92,246,0.4);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .karma-score {
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    @keyframes karma-in { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .karma-banner { animation: karma-in 0.5s ease; }
+  </style>
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  
+  <main style="padding-top: calc(var(--nav-height) + 2rem); min-height: 100vh;">
+    <div class="container" style="max-width: 800px;">
+      <h1 class="text-2xl font-bold mb-2">My Complaints</h1>
+      <p class="text-secondary mb-4">Track the status of all your submitted civic issues.</p>
+      
+      <!-- Karma Banner -->
+      <div class="karma-banner" id="karmaBanner" style="display:none;">
+        <div>
+          <div class="karma-score" id="karmaScore">0</div>
+          <div class="text-sm font-semibold" style="color: var(--text-secondary);">Civic Karma Points</div>
+        </div>
+        <div style="border-left: 1px solid var(--border-color); padding-left: 1rem; flex: 1;">
+          <p class="font-semibold mb-1">🏆 Your Civic Score</p>
+          <p class="text-sm" style="color: var(--text-secondary);">You earn <strong style="color: var(--primary-color);">+10 points</strong> every time one of your complaints gets fully resolved. Keep reporting issues to grow your score!</p>
+        </div>
+      </div>
+        <div class="empty-state" style="display: none;" id="emptyState">
+          <p class="mb-4">You haven't submitted any complaints yet.</p>
+          <a href="submit-complaint.html" class="btn btn-primary">Report an Issue</a>
+        </div>
+        <div id="loading" class="text-center py-4">Loading your complaints...</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = JSON.parse(localStorage.getItem('citizen_user'));
+      if (!user) {
+        window.location.href = 'login.html?redirect=my-complaints.html';
+        return;
+      }
+
+      const listContainer = document.getElementById('complaintsList');
+      const emptyState = document.getElementById('emptyState');
+      const loading = document.getElementById('loading');
+      
+      // Fetch karma score
+      try {
+        const userRes = await fetch(window.API_BASE + `/api/user/${user.id}`);
+        const userProfile = await userRes.json();
+        if (userProfile && userProfile.karma_points !== undefined) {
+          const banner = document.getElementById('karmaBanner');
+          const score = document.getElementById('karmaScore');
+          score.textContent = userProfile.karma_points;
+          banner.style.display = 'flex';
+        }
+      } catch (e) { console.warn('Could not fetch karma:', e); }
+      
+      try {
+        const response = await fetch(window.API_BASE + `/api/complaints?user_id=${user.id}`, { cache: 'no-store' });
+        const complaints = await response.json();
+        
+        loading.style.display = 'none';
+        
+        if (!complaints || complaints.length === 0) {
+          emptyState.style.display = 'block';
+          return;
+        }
+        
+        complaints.forEach(c => {
+          let sClass = 'badge-pending';
+          if (c.status === 'In Progress') sClass = 'badge-progress';
+          if (c.status === 'Resolved') sClass = 'badge-resolved';
+          
+          let pClass = 'badge-pending';
+          if (c.priority === 'Urgent') pClass = 'badge-urgent';
+          if (c.priority === 'High') pClass = 'badge-progress';
+          
+          const card = document.createElement('div');
+          card.className = 'complaint-card';
+          
+          const photoHtml = c.photo_url 
+            ? `<div class="mt-4"><a href="${window.API_BASE}${c.photo_url}" target="_blank" class="text-sm font-semibold" style="color: var(--primary-color);">📎 View Uploaded Photo</a></div>` 
+            : '';
+            
+          card.innerHTML = `
+            <div class="complaint-header">
+              <div>
+                <span class="font-bold text-primary" style="font-size: 1.1rem;">${c.id}</span>
+                <span class="text-sm text-secondary ml-2">${new Date(c.date).toLocaleDateString()}</span>
+              </div>
+              <span class="badge ${sClass}">${c.status}</span>
+            </div>
+            <h3 class="font-semibold mb-2" style="font-size: 1.1rem;">${c.title}</h3>
+            <p class="text-secondary text-sm mb-4">${c.description}</p>
+            <div class="d-flex align-center gap-4 text-sm" style="flex-wrap: wrap;">
+              <div><strong>Category:</strong> ${c.category}</div>
+              <div><strong>Priority:</strong> <span class="badge ${pClass}" style="transform: scale(0.9);">${c.priority}</span></div>
+              <div><strong>Department:</strong> ${c.department}</div>
+            </div>
+            ${photoHtml}
+            <div class="mt-4 pt-4 text-right" style="border-top: 1px solid var(--border-color);">
+                <a href="track-complaint.html?id=${c.id}" class="btn btn-outline text-sm" style="padding: 0.4rem 0.8rem;">Track Details</a>
+            </div>
+          `;
+          listContainer.appendChild(card);
+        });
+      } catch (err) {
+        console.error(err);
+        loading.textContent = 'Error loading complaints. Please try again.';
+      }
+    });
+  </script>
+</body>
+</html>

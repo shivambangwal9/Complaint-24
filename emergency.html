@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emergency Help - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container" style="max-width: 900px;">
+      <div class="text-center mb-8">
+        <h1 style="color: var(--accent-alert);">Emergency Helplines</h1>
+        <p>In case of life-threatening emergencies, please dial the numbers below immediately.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        
+        <!-- Police -->
+        <div class="card" style="border-left: 6px solid var(--primary-color); display: flex; align-items: center; justify-content: space-between;">
+          <div class="d-flex align-center gap-4">
+            <div style="width: 56px; height: 56px; background: #e0f2fe; color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div>
+              <h2 class="mb-1 text-lg">Police Control Room</h2>
+              <p class="text-sm mb-0">For immediate police assistance</p>
+            </div>
+          </div>
+          <a href="tel:100" class="btn btn-primary" style="font-size: 1.5rem; padding: 0.75rem 1.5rem;">100</a>
+        </div>
+
+        <!-- Ambulance -->
+        <div class="card" style="border-left: 6px solid var(--accent-alert); display: flex; align-items: center; justify-content: space-between;">
+          <div class="d-flex align-center gap-4">
+            <div style="width: 56px; height: 56px; background: #fee2e2; color: var(--accent-alert); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+            </div>
+            <div>
+              <h2 class="mb-1 text-lg">Ambulance</h2>
+              <p class="text-sm mb-0">Medical emergencies & rescue</p>
+            </div>
+          </div>
+          <a href="tel:108" class="btn btn-alert" style="font-size: 1.5rem; padding: 0.75rem 1.5rem;">108</a>
+        </div>
+
+        <!-- Fire Brigade -->
+        <div class="card" style="border-left: 6px solid var(--accent-warning); display: flex; align-items: center; justify-content: space-between;">
+          <div class="d-flex align-center gap-4">
+            <div style="width: 56px; height: 56px; background: #fef3c7; color: var(--accent-warning); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c0 0-5 6-5 12a5 5 0 0 0 10 0c0-6-5-12-5-12z"></path></svg>
+            </div>
+            <div>
+              <h2 class="mb-1 text-lg">Fire Brigade</h2>
+              <p class="text-sm mb-0">Fire and rescue operations</p>
+            </div>
+          </div>
+          <a href="tel:101" class="btn" style="background-color: var(--accent-warning); color: white; font-size: 1.5rem; padding: 0.75rem 1.5rem;">101</a>
+        </div>
+
+        <!-- Women Helpline -->
+        <div class="card" style="border-left: 6px solid #d946ef; display: flex; align-items: center; justify-content: space-between;">
+          <div class="d-flex align-center gap-4">
+            <div style="width: 56px; height: 56px; background: #fdf4ff; color: #d946ef; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a5 5 0 0 0-5 5v5a5 5 0 0 0 10 0V7a5 5 0 0 0-5-5z"></path><path d="M12 17v4"></path><path d="M9 19h6"></path></svg>
+            </div>
+            <div>
+              <h2 class="mb-1 text-lg">Women Helpline</h2>
+              <p class="text-sm mb-0">Safety & support for women</p>
+            </div>
+          </div>
+          <a href="tel:1091" class="btn" style="background-color: #d946ef; color: white; font-size: 1.5rem; padding: 0.75rem 1.5rem;">1091</a>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

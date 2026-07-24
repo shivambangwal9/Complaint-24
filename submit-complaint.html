@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Complaint - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container" style="max-width: 700px;">
+      <h1 class="mb-2">File a New Complaint</h1>
+      <p class="mb-6">Please provide the details below so we can route your issue to the correct department.</p>
+
+      <div class="card">
+        <form id="complaintForm">
+          
+          <!-- Category & Priority Auto-routing simulation -->
+          <div class="grid grid-cols-2">
+            <div class="form-group">
+              <label class="form-label" for="category">Category *</label>
+              <select id="category" class="form-control form-select" required onchange="updateSubcategories()">
+                <option value="">Select Category</option>
+                <option value="roads">Roads & Traffic</option>
+                <option value="water">Water Supply & Sewage</option>
+                <option value="electricity">Electricity</option>
+                <option value="sanitation">Sanitation & Garbage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="subcategory">Subcategory *</label>
+              <select id="subcategory" class="form-control form-select" required onchange="calculatePriority()">
+                <option value="">Select Category First</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group mb-6" id="priority-alert" style="display: none; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-md); border-left: 4px solid var(--primary-color);">
+            <div class="d-flex justify-between align-center mb-2">
+              <span class="text-sm font-semibold text-primary">Smart Triage: Priority <span id="priority-badge" class="badge"></span></span>
+              <span class="text-sm">Routed to: <strong id="department-routing"></strong></span>
+            </div>
+            <div class="d-flex align-center gap-2">
+              <span class="text-sm text-secondary">AI Confidence Score:</span>
+              <div style="flex-grow: 1; height: 6px; background: #cce4f7; border-radius: 3px; overflow: hidden;">
+                <div id="ai-confidence-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 1s ease;"></div>
+              </div>
+              <span id="ai-confidence-text" class="text-sm font-bold text-primary">0%</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="title">Complaint Title *</label>
+            <input type="text" id="title" class="form-control" placeholder="Brief summary of the issue (e.g. Broken Streetlight)" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="description">Detailed Description *</label>
+            <textarea id="description" class="form-control" placeholder="Provide more details to help the officers locate and understand the issue." required></textarea>
+          </div>
+
+          <div class="grid grid-cols-2">
+            <div class="form-group">
+              <label class="form-label" for="ward">Ward / Area *</label>
+              <select id="ward" class="form-control form-select" required>
+                <option value="">Select Ward</option>
+                <option value="Ward 1">Ward 1 (North)</option>
+                <option value="Ward 2">Ward 2 (South)</option>
+                <option value="Ward 3">Ward 3 (East)</option>
+                <option value="Ward 4">Ward 4 (West)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pinpoint Location on Map *</label>
+              <div id="complaintMap" style="height: 200px; border-radius: var(--radius-md); border: 1px solid var(--border-color); z-index: 1;"></div>
+              <div class="d-flex align-center justify-between mt-2">
+                <p class="text-sm mb-0" style="color: var(--text-secondary); font-size: 0.75rem;">Click on the map to drop a pin.</p>
+                <button type="button" onclick="getCurrentLocation()" class="btn btn-outline text-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">📍 Use Current Location</button>
+              </div>
+              <input type="hidden" id="lat" required>
+              <input type="hidden" id="lng" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="photo">Upload Photo (Optional)</label>
+            <input type="file" id="photo" class="form-control" accept="image/*" style="padding: 0.4rem;">
+            <p class="text-sm mt-1" style="color: var(--text-secondary); font-size: 0.75rem;">Adding a photo helps officers resolve the issue faster.</p>
+          </div>
+
+          <!-- On Behalf Feature -->
+          <div class="form-group pt-4" style="border-top: 1px solid var(--border-color);">
+            <label class="text-sm font-semibold d-flex align-center gap-2" style="cursor: pointer;">
+              <input type="checkbox" id="onBehalfToggle" onchange="toggleOnBehalf()">
+              Filing on behalf of someone else?
+            </label>
+          </div>
+
+          <div id="onBehalfFields" style="display: none;" class="grid grid-cols-2 mb-4">
+            <div class="form-group mb-0">
+              <label class="form-label" for="otherName">Person's Name</label>
+              <input type="text" id="otherName" class="form-control">
+            </div>
+            <div class="form-group mb-0">
+              <label class="form-label" for="otherMobile">Person's Mobile</label>
+              <input type="text" id="otherMobile" class="form-control">
+            </div>
+          </div>
+
+          <!-- Fee Notice -->
+          <div class="form-group mb-6" style="background: var(--bg-card); border: 1px dashed var(--border-color); padding: 1rem; border-radius: var(--radius-md);">
+             <label class="text-sm font-semibold d-flex align-center justify-between">
+              <span>Standard Processing Fee</span>
+              <span style="color: var(--primary-color);">₹0.00 (Free)</span>
+            </label>
+            <p class="text-sm mt-1 mb-0" style="font-size: 0.75rem;">For some specific document services, a small fee might be required. This civic complaint is free of charge.</p>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block text-lg">Submit Complaint</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    // Redirect to login if user is not authenticated
+    if (!localStorage.getItem('citizen_user')) {
+      window.location.href = 'login.html?redirect=submit-complaint.html';
+    }
+
+    const subcats = {
+      roads: ['Pothole', 'Broken Footpath', 'Waterlogging', 'Other'],
+      water: ['No Water Supply', 'Contaminated Water', 'Pipeline Leak', 'Other'],
+      electricity: ['Streetlight not working', 'Power Outage', 'Sparking Pole', 'Other'],
+      sanitation: ['Garbage not collected', 'Dead Animal', 'Public Toilet Dirty', 'Other']
+    };
+
+    function updateSubcategories() {
+      const cat = document.getElementById('category').value;
+      const sub = document.getElementById('subcategory');
+      sub.innerHTML = '<option value="">Select Subcategory</option>';
+      if (cat && subcats[cat]) {
+        subcats[cat].forEach(item => {
+          sub.innerHTML += `<option value="${item}">${item}</option>`;
+        });
+      }
+      calculatePriority();
+    }
+
+    function calculatePriority() {
+      const cat = document.getElementById('category').value;
+      const sub = document.getElementById('subcategory').value;
+      const alertBox = document.getElementById('priority-alert');
+      
+      if (!cat || !sub) {
+        alertBox.style.display = 'none';
+        return;
+      }
+
+      alertBox.style.display = 'block';
+      let priority = 'Normal';
+      let department = 'General Administration';
+      let pClass = 'badge-pending'; // default yellowish
+
+      // Smart Triage Logic
+      if (cat === 'electricity') department = 'Electrical Board';
+      if (cat === 'water') department = 'Water & Sanitation Dept';
+      if (cat === 'roads') department = 'Public Works Dept (PWD)';
+      if (cat === 'sanitation') department = 'Solid Waste Management';
+
+      if (sub.includes('Power Outage') || sub.includes('Sparking') || sub.includes('Contaminated') || sub.includes('Dead Animal')) {
+        priority = 'Urgent';
+        pClass = 'badge-urgent'; // Red
+      } else if (sub.includes('Leak') || sub.includes('Waterlogging')) {
+        priority = 'High';
+        pClass = 'badge-progress'; // Blue
+      }
+
+      document.getElementById('priority-badge').textContent = priority;
+      document.getElementById('priority-badge').className = `badge ${pClass}`;
+      document.getElementById('department-routing').textContent = department;
+
+      // Simulate AI confidence score based on priority
+      const confidence = priority === 'Urgent' ? 98 : (priority === 'High' ? 89 : 75);
+      setTimeout(() => {
+        document.getElementById('ai-confidence-bar').style.width = confidence + '%';
+        document.getElementById('ai-confidence-text').textContent = confidence + '%';
+      }, 100);
+    }
+
+    function toggleOnBehalf() {
+      const isChecked = document.getElementById('onBehalfToggle').checked;
+      document.getElementById('onBehalfFields').style.display = isChecked ? 'grid' : 'none';
+    }
+
+    // Leaflet Map Initialization
+    let map;
+    let marker;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize map centered on a dummy city (e.g., New Delhi coordinates)
+      map = L.map('complaintMap').setView([28.6139, 77.2090], 12);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        if (marker) {
+          map.removeLayer(marker);
+        }
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+      });
+    });
+
+    function getCurrentLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          
+          map.setView([lat, lng], 16);
+          if (marker) {
+            map.removeLayer(marker);
+          }
+          marker = L.marker([lat, lng]).addTo(map);
+          
+          document.getElementById('lat').value = lat;
+          document.getElementById('lng').value = lng;
+        }, (error) => {
+          console.error(error);
+          alert("Unable to retrieve your location. Please check browser permissions.");
+        });
+      } else {
+        alert("Geolocation is not supported by your browser.");
+      }
+    }
+
+    document.getElementById('complaintForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!document.getElementById('lat').value) {
+        alert("Please drop a pin on the map for the exact location.");
+        return;
+      }
+
+      const newId = 'CMP-' + Math.floor(Math.random() * 9000 + 1000);
+      const user = JSON.parse(localStorage.getItem('citizen_user')) || {};
+      const token = localStorage.getItem('token') || (user.token ? user.token : '');
+      
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      let photoUrl = null;
+      const photoInput = document.getElementById('photo');
+      if (photoInput.files.length > 0) {
+        const formData = new FormData();
+        formData.append('photo', photoInput.files[0]);
+        
+        try {
+          const uploadRes = await fetch(window.API_BASE + '/api/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          const uploadResult = await uploadRes.json();
+          if (uploadResult.success) {
+            photoUrl = uploadResult.photo_url;
+          } else {
+            console.error('Upload failed:', uploadResult.error);
+            alert('Photo upload failed: ' + (uploadResult.error || 'Unknown error'));
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Complaint';
+            return;
+          }
+        } catch (err) {
+          console.error(err);
+          alert('Photo upload failed due to server error.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Complaint';
+          return;
+        }
+      }
+      
+      const newComplaint = {
+        id: newId,
+        user_id: user.id || null,
+        title: document.getElementById('title').value,
+        description: document.getElementById('description').value,
+        category: document.getElementById('category').options[document.getElementById('category').selectedIndex].text,
+        status: 'Pending',
+        priority: document.getElementById('priority-badge').textContent || 'Normal',
+        date: new Date().toISOString(),
+        department: document.getElementById('department-routing').textContent || 'General Administration',
+        lat: document.getElementById('lat').value,
+        lng: document.getElementById('lng').value,
+        photo_url: photoUrl
+      };
+      
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(newComplaint)
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          alert(`Complaint submitted successfully! Your tracking ID is ${newId}.`);
+          window.location.href = 'track-complaint.html?id=' + newId;
+        } else {
+          alert("Error submitting complaint. Please try again.");
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Submit Complaint';
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Server error. Ensure backend is running.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Complaint';
+      }
+    });
+  </script>
+</body>
+</html>

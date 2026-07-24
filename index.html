@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - Complain 24</title>
+  <meta name="description"
+    content="Welcome to Complain 24. Submit complaints, track status, and access emergency helplines quickly.">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Navbar will be injected by app.js -->
+
+  <main>
+    <section class="hero-section"
+      style="background: rgba(139, 92, 246, 0.1); border-bottom: 1px solid rgba(139, 92, 246, 0.2); padding: 4rem 0; text-align: center;">
+      <div class="container">
+        <h1 style="color: white; margin-bottom: 1rem;">Welcome to Complain 24</h1>
+        <p style="color: var(--text-secondary); font-size: 1.125rem; max-width: 600px; margin: 0 auto 2rem;">
+          A fast, secure, and trustworthy way to resolve civic issues, contact departments, and get emergency
+          assistance.
+        </p>
+        <div class="hero-actions" style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <a href="submit-complaint.html" class="btn btn-primary"
+            style="font-weight: 600;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+            </svg>
+            Submit Complaint
+          </a>
+          <a href="track-complaint.html" class="btn btn-outline">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            Track Status
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-actions-section" style="padding: 3rem 0;">
+      <div class="container">
+        <h2 class="text-center mb-6">Quick Services</h2>
+        <div class="grid grid-cols-4">
+          <a href="submit-complaint.html" class="card text-center" style="display: block; transition: transform 0.2s;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(139, 92, 246, 0.2); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <h3 class="text-lg">File a Complaint</h3>
+            <p class="text-sm">Report issues regarding roads, water, electricity, etc.</p>
+          </a>
+          <a href="track-complaint.html" class="card text-center" style="display: block; transition: transform 0.2s;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(6, 182, 212, 0.2); color: var(--accent-cyan); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <h3 class="text-lg">Track Complaint</h3>
+            <p class="text-sm">Check the real-time status of your previous reports.</p>
+          </a>
+          <a href="emergency.html" class="card text-center" style="display: block; border-color: rgba(239, 68, 68, 0.3);">
+            <div
+              style="width: 48px; height: 48px; background: rgba(239, 68, 68, 0.2); color: var(--accent-alert); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                  d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-lg" style="color: var(--accent-alert);">Emergency Help</h3>
+            <p class="text-sm">Immediate contact numbers for police, fire, ambulance.</p>
+          </a>
+          <a href="contacts.html" class="card text-center" style="display: block;">
+            <div
+              style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.2); color: var(--accent-success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <h3 class="text-lg">Direct Contacts</h3>
+            <p class="text-sm">Directory of all department officials and office hours.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="notices-section" style="padding: 3rem 0;">
+      <div class="container">
+        <div class="d-flex justify-between align-center mb-4">
+          <h2>Public Notices</h2>
+          <a href="notices.html" class="btn btn-outline">View All</a>
+        </div>
+        <div class="grid grid-cols-2">
+          <div class="card" style="border-left: 4px solid var(--accent-warning);">
+            <div class="d-flex justify-between align-center mb-2">
+              <span class="badge badge-pending">Important</span>
+              <span class="text-sm text-secondary">Oct 15, 2026</span>
+            </div>
+            <h3 class="text-lg">Water Supply Interruption in Ward 4</h3>
+            <p class="text-sm mb-0">Due to pipeline maintenance, water supply will be halted between 10 AM and 4 PM
+              tomorrow.</p>
+          </div>
+          <div class="card" style="border-left: 4px solid var(--primary-color);">
+            <div class="d-flex justify-between align-center mb-2">
+              <span class="badge badge-progress">Information</span>
+              <span class="text-sm text-secondary">Oct 12, 2026</span>
+            </div>
+            <h3 class="text-lg">New Property Tax Guidelines</h3>
+            <p class="text-sm mb-0">Please review the updated property tax rebate structures effective this month.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

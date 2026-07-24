@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  
+  <main style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--nav-height) - 300px);">
+    <div class="container" style="max-width: 480px; width: 100%;">
+      <div class="card" style="padding: 2.5rem;">
+        <div class="text-center mb-6">
+          <h1 class="text-lg mb-2" style="font-size: 1.5rem;">Welcome to Complain 24</h1>
+          <p class="text-sm" id="login-subtitle">Enter your registered email or phone and password to log in</p>
+        </div>
+        
+        <div id="alert-message" class="text-sm text-center mb-4" style="font-weight: 600; display: none;"></div>
+        
+        <!-- Unified Login Form -->
+        <form id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="login_contact">Email or Mobile Number</label>
+            <input type="text" id="login_contact" class="form-control" placeholder="e.g. 9876543210 or email@domain.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login_password">Password</label>
+            <input type="password" id="login_password" class="form-control" placeholder="••••••••" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Log In</button>
+        </form>
+        
+        <div id="signUpLinkContainer" class="text-center mt-6">
+          <p class="text-sm mb-0">Don't have an account? <a href="register.html" class="font-semibold" style="color: var(--primary-color);">Sign Up</a></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    const alertMsg = document.getElementById('alert-message');
+
+    function showAlert(msg, color) {
+        alertMsg.style.display = 'block';
+        alertMsg.textContent = msg;
+        alertMsg.style.color = color || 'var(--accent-alert)';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect');
+        if (redirect) {
+            // Update SignUp link to preserve redirect
+            const signUpLink = document.querySelector('a[href="register.html"]');
+            if (signUpLink) {
+                signUpLink.href = `register.html?redirect=${encodeURIComponent(redirect)}`;
+            }
+            
+            if (redirect === 'submit-complaint.html') {
+                showAlert('Please log in to submit a complaint.', 'var(--primary-color)');
+            }
+        }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const contactInfo = document.getElementById('login_contact').value;
+      const password = document.getElementById('login_password').value;
+      const btn = document.getElementById('loginBtn');
+      
+      btn.disabled = true;
+      btn.textContent = 'Logging In...';
+      
+      try {
+        const res = await fetch(window.API_BASE + '/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact_info: contactInfo, password: password })
+        });
+        
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            showAlert('Login successful! Redirecting...', 'var(--accent-success)');
+            localStorage.setItem('citizen_user', JSON.stringify(data.user));
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            
+            setTimeout(() => {
+                const role = data.user.role;
+                if (role === 'officer') {
+                    window.location.href = 'officer-dashboard.html';
+                } else if (role === 'supervisor') {
+                    window.location.href = 'supervisor-dashboard.html';
+                } else if (role === 'admin') {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirect = urlParams.get('redirect');
+                    if (redirect) {
+                        window.location.href = redirect;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            }, 1000);
+        } else {
+            showAlert(data.error);
+            btn.disabled = false;
+            btn.textContent = 'Log In';
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.message === 'Failed to fetch' || err.message.includes('network') || err.message.includes('fetch')) {
+            showAlert('Network error: Cannot reach the backend server.');
+        } else {
+            showAlert(err.message);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Log In';
+      }
+    });
+  </script>
+</body>
+</html>

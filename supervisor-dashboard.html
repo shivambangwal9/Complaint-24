@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supervisor Dashboard - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-layout { display: flex; gap: 2rem; }
+    .sidebar { width: 250px; flex-shrink: 0; }
+    .main-content { flex-grow: 1; }
+    .stat-card { text-align: center; padding: 1.5rem 1rem; }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); line-height: 1; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container dashboard-layout">
+      
+      <aside class="sidebar">
+        <div class="card" style="position: sticky; top: calc(var(--nav-height) + 2rem);">
+          <div class="text-center mb-6 pb-6" style="border-bottom: 1px solid var(--border-color);">
+            <div id="profile-initials" style="width: 64px; height: 64px; background: rgba(239, 68, 68, 0.1); color: var(--accent-alert); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; font-weight: bold;">
+              SD
+            </div>
+            <h3 id="profile-name" class="text-sm">Supervisor Davis</h3>
+            <p id="profile-dept" class="text-sm mb-0">City Operations</p>
+          </div>
+          <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="#" class="btn btn-primary" style="justify-content: flex-start;">SLA & Escalations</a>
+            <a href="#" class="btn btn-outline" style="justify-content: flex-start; border: none; color: var(--text-secondary);">Department Performance</a>
+            <a href="#" class="btn btn-outline" style="justify-content: flex-start; border: none; color: var(--text-secondary);">Generate Reports</a>
+          </nav>
+        </div>
+      </aside>
+
+      <section class="main-content">
+        <h1 class="mb-6">Supervisor Command Center</h1>
+        
+        <div class="grid grid-cols-3 mb-8">
+          <div class="card stat-card" style="border-bottom: 4px solid var(--accent-alert);">
+            <div class="stat-number" style="color: var(--accent-alert);" id="statEscalated">0</div>
+            <div class="text-sm text-secondary font-semibold">Escalated (SLA Breached)</div>
+          </div>
+          <div class="card stat-card" style="border-bottom: 4px solid var(--accent-warning);">
+            <div class="stat-number" style="color: var(--accent-warning);">24</div>
+            <div class="text-sm text-secondary font-semibold">Nearing Deadline (24h)</div>
+          </div>
+          <div class="card stat-card" style="border-bottom: 4px solid var(--accent-success);">
+            <div class="stat-number" style="color: var(--accent-success);">92%</div>
+            <div class="text-sm text-secondary font-semibold">On-Time Resolution Rate</div>
+          </div>
+        </div>
+
+        <div class="card mb-8">
+          <h2 class="text-lg mb-4 text-alert" style="color: var(--accent-alert);">Critical Escalations Action Required</h2>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background-color: rgba(239, 68, 68, 0.1); color: var(--accent-alert);">
+              <tr>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">ID</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">Department</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">Days Overdue</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color); text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="escalationTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <div class="d-flex justify-between align-center mb-4">
+            <h2 class="text-lg mb-0">Department Performance (SLA Metrics)</h2>
+            <button class="btn btn-outline text-sm" onclick="exportDataToCSV()">Download CSV Report</button>
+          </div>
+          <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
+             <canvas id="performanceChart"></canvas>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = JSON.parse(localStorage.getItem('citizen_user'));
+      if (user) {
+        if (document.getElementById('profile-name')) document.getElementById('profile-name').textContent = user.name;
+        if (document.getElementById('profile-dept')) document.getElementById('profile-dept').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Dashboard';
+        if (document.getElementById('profile-initials')) {
+          const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+          document.getElementById('profile-initials').textContent = initials;
+        }
+      }
+
+      let complaints = [];
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', { cache: 'no-store' });
+        complaints = await response.json();
+      } catch (err) {
+        console.error("Failed to load complaints from API", err);
+      }
+      
+      const tbody = document.getElementById('escalationTableBody');
+      
+      let escalatedCount = 0;
+
+      complaints.forEach(c => {
+        if (c.status === 'Resolved') return;
+        
+        const d = new Date(c.date);
+        const sla = new Date(d.getTime() + (2 * 24 * 60 * 60 * 1000));
+        
+        if (new Date() > sla) {
+          escalatedCount++;
+          const overdueDays = Math.ceil((new Date() - sla) / (1000 * 60 * 60 * 24));
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 500;">${c.id}</td>
+            <td style="padding: 1rem; border-bottom: 1px solid var(--border-color);">${c.department}</td>
+            <td style="padding: 1rem; border-bottom: 1px solid var(--border-color); color: var(--accent-alert); font-weight: bold;">${overdueDays} Days</td>
+            <td style="padding: 1rem; border-bottom: 1px solid var(--border-color); text-align: right;">
+              <button class="btn btn-alert text-sm" style="padding: 0.25rem 0.5rem;" onclick="alert('Notification sent to Department Head.')">Nudge Officer</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+
+      document.getElementById('statEscalated').textContent = escalatedCount;
+      
+      if (escalatedCount === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 1.5rem; text-align: center; color: var(--text-secondary);">No critical escalations at this time.</td></tr>`;
+      }
+
+      // Chart.js Setup for Department Performance
+      const deptSLA = {};
+      complaints.forEach(c => {
+        if (!deptSLA[c.department]) deptSLA[c.department] = { total: 0, met: 0 };
+        deptSLA[c.department].total++;
+        const d = new Date(c.date);
+        const sla = new Date(d.getTime() + (2 * 24 * 60 * 60 * 1000));
+        
+        // If resolved before SLA or currently pending but not breached yet
+        if (c.status === 'Resolved') {
+            const rDate = new Date(c.resolvedDate || new Date().toISOString());
+            if (rDate <= sla) deptSLA[c.department].met++;
+        } else {
+            if (new Date() <= sla) deptSLA[c.department].met++;
+        }
+      });
+
+      const labels = Object.keys(deptSLA);
+      const data = labels.map(dept => {
+         return deptSLA[dept].total > 0 ? Math.round((deptSLA[dept].met / deptSLA[dept].total) * 100) : 0;
+      });
+
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels.length ? labels : ['No Data'],
+          datasets: [{
+            label: 'SLA Compliance (%)',
+            data: data.length ? data : [0],
+            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+            borderColor: '#3b82f6',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: 'Percentage (%)' }
+            }
+          }
+        }
+      });
+    });
+
+    async function exportDataToCSV() {
+      let complaints = [];
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', { cache: 'no-store' });
+        complaints = await response.json();
+      } catch (err) {
+        alert("Failed to load complaints");
+        return;
+      }
+      
+      if (!complaints.length) {
+        alert("No data to export.");
+        return;
+      }
+      const headers = ['ID', 'Title', 'Category', 'Priority', 'Status', 'Date', 'Department'];
+      const csvRows = [headers.join(',')];
+      
+      complaints.forEach(c => {
+        const row = [
+          c.id,
+          `"${c.title.replace(/"/g, '""')}"`,
+          `"${c.category}"`,
+          c.priority,
+          c.status,
+          c.date,
+          `"${c.department}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+      
+      const blob = new Blob([csvRows.join('\\n')], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'escalations_report.csv');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>

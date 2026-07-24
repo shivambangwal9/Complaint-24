@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Notices - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container" style="max-width: 900px;">
+      <div class="text-center mb-8">
+        <h1>Public Notices & Announcements</h1>
+        <p>Stay updated with official bulletins, advisories, and civic schedules.</p>
+      </div>
+
+      <div class="d-flex justify-between align-center mb-4">
+        <h2 class="text-lg mb-0">Recent Notices</h2>
+        <select class="form-control" style="width: auto;">
+          <option>All Categories</option>
+          <option>Maintenance</option>
+          <option>Tax & Finance</option>
+          <option>Health & Safety</option>
+        </select>
+      </div>
+
+      <div class="grid gap-4">
+        <!-- Notice 1: Pinned/Urgent -->
+        <div class="card" style="border-left: 4px solid var(--accent-alert);">
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="badge badge-urgent">Urgent &bull; Maintenance</span>
+            <span class="text-sm text-secondary font-semibold">Today, 08:00 AM</span>
+          </div>
+          <h3 class="text-lg">Main Road Closure for Metro Construction</h3>
+          <p class="text-sm">The MG Road junction will be completely closed for traffic from Friday 10 PM to Monday 6 AM. Commuters are advised to take alternate routes via Ring Road.</p>
+          <a href="#" class="text-sm font-semibold text-primary">Read Full Advisory &rarr;</a>
+        </div>
+
+        <!-- Notice 2 -->
+        <div class="card" style="border-left: 4px solid var(--accent-warning);">
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="badge badge-pending">Important &bull; Utilities</span>
+            <span class="text-sm text-secondary font-semibold">Oct 15, 2026</span>
+          </div>
+          <h3 class="text-lg">Water Supply Interruption in Ward 4</h3>
+          <p class="text-sm">Due to pipeline maintenance, water supply will be halted between 10 AM and 4 PM tomorrow.</p>
+        </div>
+
+        <!-- Notice 3 -->
+        <div class="card" style="border-left: 4px solid var(--primary-color);">
+          <div class="d-flex justify-between align-center mb-2">
+            <span class="badge badge-progress">Information &bull; Finance</span>
+            <span class="text-sm text-secondary font-semibold">Oct 12, 2026</span>
+          </div>
+          <h3 class="text-lg">New Property Tax Guidelines</h3>
+          <p class="text-sm">Please review the updated property tax rebate structures effective this month. A 5% early bird discount is available until Nov 1st.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Local database (ephemeral on Render — do not commit)
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded files (user-generated, not part of source)
+uploads/*
+!uploads/.gitkeep
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Batch scripts (local only)
+*.bat

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  <main style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--nav-height) - 100px); padding: 2rem 0;">
+    <div class="container" style="max-width: 500px; width: 100%;">
+      <div class="card" style="padding: 2.5rem;">
+        <div class="text-center mb-6">
+          <h1 class="text-lg mb-2" style="font-size: 1.5rem;">Register / Sign Up</h1>
+          <p class="text-sm" id="register-subtitle">Create your Complain 24 account using a One-Time Password</p>
+        </div>
+
+        <!-- Register Tabs -->
+        <div class="register-tabs" style="display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; gap: 0.75rem;">
+          <button type="button" id="citizenTab" class="btn btn-primary" style="flex: 1; padding: 0.5rem 1rem;" onclick="switchTab('citizen')">Citizen Sign Up</button>
+          <button type="button" id="adminTab" class="btn btn-outline" style="flex: 1; padding: 0.5rem 1rem; color: var(--text-secondary); border-color: var(--border-color);" onclick="switchTab('admin')">Admin Sign Up</button>
+        </div>
+        
+        <div id="alert-message" class="text-sm text-center mb-4" style="font-weight: 600; display: none;"></div>
+        
+        <!-- Step 1: Request OTP -->
+        <form id="requestOtpForm">
+          <div class="form-group">
+            <label class="form-label" for="reg_name">Full Name</label>
+            <input type="text" id="reg_name" class="form-control" placeholder="e.g. John Doe" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="contact_info">Mobile Number or Email</label>
+            <input type="text" id="contact_info" class="form-control" placeholder="e.g. 9876543210 or email@domain.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg_password">Password</label>
+            <input type="password" id="reg_password" class="form-control" placeholder="••••••••" required minlength="6">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="requestBtn">Get OTP</button>
+        </form>
+
+        <!-- Step 2: Verify OTP -->
+        <form id="verifyOtpForm" style="display: none;">
+          <div class="form-group">
+            <label class="form-label" for="otp_code">Enter 6-digit OTP</label>
+            <input type="text" id="otp_code" class="form-control" placeholder="XXXXXX" required maxlength="6" style="letter-spacing: 0.5rem; text-align: center; font-size: 1.25rem;">
+          </div>
+          <button type="submit" class="btn btn-secondary btn-block" id="verifyBtn">Verify & Register</button>
+          <div class="text-center mt-4">
+             <a href="#" class="text-sm font-semibold" style="color: var(--secondary-color);" onclick="resetForm()">← Use a different number</a>
+          </div>
+        </form>
+        
+        <div id="loginLinkContainer" class="text-center mt-6">
+          <p class="text-sm mb-0">Already have an account? <a href="login.html" class="font-semibold" style="color: var(--primary-color);">Log In</a></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    const requestForm = document.getElementById('requestOtpForm');
+    const verifyForm = document.getElementById('verifyOtpForm');
+    const alertMsg = document.getElementById('alert-message');
+    let currentUserContact = '';
+
+    function showAlert(msg, color) {
+        alertMsg.style.display = 'block';
+        alertMsg.textContent = msg;
+        alertMsg.style.color = color || 'var(--accent-alert)';
+    }
+
+    function resetForm() {
+        requestForm.style.display = 'block';
+        verifyForm.style.display = 'none';
+        alertMsg.style.display = 'none';
+        document.getElementById('otp_code').value = '';
+    }
+
+    let selectedRole = 'citizen';
+    let currentName = '';
+    let currentPassword = '';
+
+    function switchTab(tab) {
+        const citizenTab = document.getElementById('citizenTab');
+        const adminTab = document.getElementById('adminTab');
+        const subtitle = document.getElementById('register-subtitle');
+
+        alertMsg.style.display = 'none';
+        selectedRole = tab;
+
+        if (tab === 'citizen') {
+            citizenTab.className = 'btn btn-primary';
+            adminTab.className = 'btn btn-outline';
+            adminTab.style.color = 'var(--text-secondary)';
+            adminTab.style.borderColor = 'var(--border-color)';
+            subtitle.textContent = 'Create your Complain 24 account using a One-Time Password';
+        } else {
+            adminTab.className = 'btn btn-primary';
+            adminTab.style.color = 'white';
+            adminTab.style.borderColor = 'transparent';
+            citizenTab.className = 'btn btn-outline';
+            citizenTab.style.color = 'var(--text-secondary)';
+            citizenTab.style.borderColor = 'var(--border-color)';
+            subtitle.textContent = 'Register a new Administrator account to join the command center';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect');
+        if (redirect) {
+            // Update LogIn link to preserve redirect
+            const logInLink = document.querySelector('a[href="login.html"]');
+            if (logInLink) {
+                logInLink.href = `login.html?redirect=${encodeURIComponent(redirect)}`;
+            }
+            
+            if (redirect === 'submit-complaint.html') {
+                showAlert('Please register to submit a complaint.', 'var(--primary-color)');
+            }
+        }
+        
+        // Auto-switch to admin tab if specified
+        const initialTab = urlParams.get('tab');
+        if (initialTab === 'admin') {
+            switchTab('admin');
+        }
+    });
+
+    requestForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('reg_name').value;
+      const contactInfo = document.getElementById('contact_info').value;
+      const password = document.getElementById('reg_password').value;
+      const btn = document.getElementById('requestBtn');
+      
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      
+      try {
+        const res = await fetch(window.API_BASE + '/api/auth/request-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contact_info: contactInfo })
+        });
+        
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            currentUserContact = contactInfo;
+            currentName = name;
+            currentPassword = password;
+            
+            requestForm.style.display = 'none';
+            verifyForm.style.display = 'block';
+            showAlert('OTP sent successfully! Please check your mobile or email.', 'var(--accent-success)');
+        } else {
+            showAlert(data.error);
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.message === 'Failed to fetch' || err.message.includes('network') || err.message.includes('fetch')) {
+            showAlert('Network error: Cannot reach the backend server.');
+        } else {
+            showAlert(err.message);
+        }
+      }
+      btn.disabled = false;
+      btn.textContent = 'Get OTP';
+    });
+
+    verifyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const otpCode = document.getElementById('otp_code').value;
+      const btn = document.getElementById('verifyBtn');
+      
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+      
+      try {
+        const res = await fetch(window.API_BASE + '/api/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                contact_info: currentUserContact, 
+                otp_code: otpCode,
+                name: currentName,
+                password: currentPassword,
+                role: selectedRole
+            })
+        });
+        
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Server error ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            showAlert('Registration successful! Redirecting...', 'var(--accent-success)');
+            localStorage.setItem('citizen_user', JSON.stringify(data.user));
+            
+            setTimeout(() => {
+                const role = data.user.role;
+                if (role === 'officer') {
+                    window.location.href = 'officer-dashboard.html';
+                } else if (role === 'supervisor') {
+                    window.location.href = 'supervisor-dashboard.html';
+                } else if (role === 'admin') {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirect = urlParams.get('redirect');
+                    if (redirect) {
+                        window.location.href = redirect;
+                    } else {
+                        window.location.href = 'index.html';
+                    }
+                }
+            }, 1000);
+        } else {
+            showAlert(data.error);
+            btn.disabled = false;
+            btn.textContent = 'Verify & Register';
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.message === 'Failed to fetch' || err.message.includes('network') || err.message.includes('fetch')) {
+            showAlert('Network error: Cannot reach the backend server.');
+        } else {
+            showAlert(err.message);
+        }
+        btn.disabled = false;
+        btn.textContent = 'Verify & Register';
+      }
+    });
+  </script>
+</body>
+</html>

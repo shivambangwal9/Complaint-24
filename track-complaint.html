@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Complaint - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ---- Progress Stepper ---- */
+    .progress-stepper {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin: 1.5rem 0;
+      position: relative;
+    }
+    .progress-stepper::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      height: 3px;
+      background: var(--border-color);
+      z-index: 0;
+    }
+    .step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+    .step-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid var(--border-color);
+      background: var(--bg-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      transition: all 0.4s ease;
+      position: relative;
+      z-index: 2;
+    }
+    .step.done .step-circle {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.6);
+      animation: pulse-glow 2s infinite;
+    }
+    .step.done.success .step-circle {
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.6);
+    }
+    .step.done.alert .step-circle {
+      background: linear-gradient(135deg, #ef4444, #f59e0b);
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.5); }
+      50% { box-shadow: 0 0 25px rgba(139, 92, 246, 0.9); }
+    }
+    .step-progress-line {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      right: -50%;
+      height: 3px;
+      background: linear-gradient(90deg, #8b5cf6, #ec4899);
+      z-index: 1;
+      transform-origin: left;
+      transition: transform 0.6s ease;
+    }
+    .step-label {
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      transition: color 0.3s;
+    }
+    .step.done .step-label { color: var(--text-primary); }
+    .step-date {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+    /* History Log Cards */
+    .history-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container" style="max-width: 800px;">
+      <div class="text-center mb-8">
+        <h1>Track Your Complaint</h1>
+        <p>Enter your 7-character Complaint ID (e.g., CMP-1234) to view the real-time status.</p>
+        
+        <form id="trackForm" class="d-flex gap-2 justify-center mt-4" style="max-width: 400px; margin: 0 auto;">
+          <input type="text" id="searchId" class="form-control" placeholder="CMP-XXXX" required style="font-size: 1rem; padding: 0.75rem;">
+          <button type="submit" class="btn btn-primary">Track</button>
+        </form>
+      </div>
+
+      <!-- Result Container -->
+      <div id="resultContainer" style="display: none;">
+        <div class="card mb-6">
+          <div class="d-flex justify-between align-center border-b pb-4 mb-4" style="border-bottom: 1px solid var(--border-color);">
+            <div>
+              <h2 id="r-title" class="mb-1 text-lg"></h2>
+              <p class="text-sm mb-0">ID: <strong id="r-id" style="color: var(--primary-color);"></strong> &bull; Filed on <span id="r-date"></span></p>
+            </div>
+            <div class="text-right">
+              <span id="r-status" class="badge"></span>
+              <div class="text-sm mt-1 font-semibold" style="color: var(--accent-alert); display: none;" id="r-escalation">
+                &#9888; Escalated
+              </div>
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 text-sm mb-6">
+            <div>
+              <p class="mb-1"><strong>Category:</strong> <span id="r-cat"></span></p>
+              <p class="mb-0"><strong>Department:</strong> <span id="r-dept"></span></p>
+            </div>
+            <div>
+              <p class="mb-1"><strong>Priority:</strong> <span id="r-priority"></span></p>
+              <p class="mb-0"><strong>SLA Target:</strong> <span id="r-sla"></span></p>
+            </div>
+          </div>
+
+          <h3 class="text-sm mb-6" style="text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em;">Progress Timeline</h3>
+          
+          <!-- Animated Stepper -->
+          <div class="progress-stepper" id="progress-stepper">
+            <div class="step" id="step-submitted">
+              <div class="step-circle">📋</div>
+              <div class="step-label">Submitted</div>
+              <div class="step-date" id="step-submitted-date"></div>
+            </div>
+            <div class="step" id="step-progress">
+              <div class="step-circle">⚙️</div>
+              <div class="step-label">In Progress</div>
+              <div class="step-date" id="step-progress-date"></div>
+            </div>
+            <div class="step" id="step-resolved">
+              <div class="step-circle">✅</div>
+              <div class="step-label">Resolved</div>
+              <div class="step-date" id="step-resolved-date"></div>
+            </div>
+          </div>
+
+          <!-- Detailed History Log -->
+          <h3 class="text-sm mb-3 mt-6" style="text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em;">Activity Log</h3>
+          <div id="r-timeline" style="padding-left: 0.5rem;">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+
+        <div id="feedbackSection" style="display: none;" class="card text-center bg-gray-50">
+          <h3 class="text-lg">Is this issue resolved to your satisfaction?</h3>
+          <p class="text-sm">Your feedback helps us improve civic services.</p>
+          <a href="feedback.html" class="btn btn-secondary mt-2">Give Feedback</a>
+        </div>
+      </div>
+      
+      <div id="errorContainer" style="display: none; text-align: center; padding: 2rem; color: var(--accent-alert);">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 1rem;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <h3>Complaint Not Found</h3>
+        <p class="text-sm text-secondary">Please check your ID and try again.</p>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Auto-search if ID is in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      if (id) {
+        document.getElementById('searchId').value = id;
+        searchComplaint(id);
+      }
+    });
+
+    document.getElementById('trackForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('searchId').value.trim().toUpperCase();
+      searchComplaint(id);
+    });
+
+    async function searchComplaint(id) {
+      let complaints = [];
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', { cache: 'no-store' });
+        complaints = await response.json();
+      } catch (err) {
+        console.error(err);
+      }
+      const complaint = complaints.find(c => c.id === id);
+      
+      const res = document.getElementById('resultContainer');
+      const err = document.getElementById('errorContainer');
+      
+      if (!complaint) {
+        res.style.display = 'none';
+        err.style.display = 'block';
+        return;
+      }
+      
+      err.style.display = 'none';
+      res.style.display = 'block';
+      
+      // Populate fields
+      document.getElementById('r-title').textContent = complaint.title;
+      document.getElementById('r-id').textContent = complaint.id;
+      const d = new Date(complaint.date);
+      document.getElementById('r-date').textContent = d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      document.getElementById('r-cat').textContent = complaint.category;
+      document.getElementById('r-dept').textContent = complaint.department;
+      document.getElementById('r-priority').textContent = complaint.priority;
+      
+      // SLA target (mock: +2 days)
+      const slaDate = new Date(d.getTime() + (2 * 24 * 60 * 60 * 1000));
+      document.getElementById('r-sla').textContent = slaDate.toLocaleDateString();
+
+      // Status Badge
+      const statusBadge = document.getElementById('r-status');
+      statusBadge.textContent = complaint.status;
+      if (complaint.status === 'Resolved') statusBadge.className = 'badge badge-resolved';
+      else if (complaint.status === 'In Progress') statusBadge.className = 'badge badge-progress';
+      else statusBadge.className = 'badge badge-pending';
+
+      // Escalation UI
+      const isEscalated = (new Date() > slaDate && complaint.status !== 'Resolved');
+      document.getElementById('r-escalation').style.display = isEscalated ? 'block' : 'none';
+
+      // Feedback button
+      if (complaint.status === 'Resolved') {
+        document.getElementById('feedbackSection').style.display = 'block';
+        const fbLink = document.querySelector('#feedbackSection a');
+        if (fbLink) fbLink.href = `feedback.html?id=${encodeURIComponent(complaint.id)}`;
+      } else {
+        document.getElementById('feedbackSection').style.display = 'none';
+      }
+
+      // ---- Animate the Stepper ----
+      const stepSubmitted = document.getElementById('step-submitted');
+      const stepProgress = document.getElementById('step-progress');
+      const stepResolved = document.getElementById('step-resolved');
+      const formatDate = (iso) => iso ? new Date(iso).toLocaleDateString([], {month:'short', day:'numeric'}) : '';
+      
+      // Always mark submitted
+      stepSubmitted.classList.add('done');
+      document.getElementById('step-submitted-date').textContent = formatDate(complaint.date);
+
+      if (complaint.status === 'In Progress' || complaint.status === 'Resolved') {
+        setTimeout(() => {
+          stepProgress.classList.add('done');
+          document.getElementById('step-progress-date').textContent = formatDate(new Date(d.getTime() + 3600000).toISOString());
+        }, 300);
+      }
+      if (complaint.status === 'Resolved') {
+        setTimeout(() => {
+          stepResolved.classList.add('done', 'success');
+          document.getElementById('step-resolved-date').textContent = formatDate(complaint.resolvedDate || new Date().toISOString());
+        }, 600);
+      }
+
+      // ---- Activity Log ----
+      let timelineHTML = '';
+      timelineHTML += createLogItem('📋 Complaint Submitted', 'Received and logged into the system.', complaint.date);
+      if (complaint.status === 'In Progress' || complaint.status === 'Resolved') {
+        timelineHTML += createLogItem('⚙️ Work Started', 'Assigned department has begun addressing the issue.', new Date(d.getTime() + 3600000).toISOString());
+      }
+      if (isEscalated) {
+        timelineHTML += createLogItem('🚨 Escalated', 'SLA deadline breached. Issue escalated to Supervisor.', slaDate.toISOString());
+      }
+      if (complaint.status === 'Resolved') {
+        timelineHTML += createLogItem('✅ Resolved', 'Issue has been successfully resolved. Thank you for your patience!', complaint.resolvedDate || new Date().toISOString());
+      }
+      document.getElementById('r-timeline').innerHTML = timelineHTML || '<p class="text-sm text-secondary">No activity yet.</p>';
+    }
+
+    function createLogItem(title, desc, date) {
+      const dateStr = date ? new Date(date).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+      return `
+        <div class="history-item">
+          <div class="history-dot" style="margin-top: 5px;"></div>
+          <div style="flex: 1;">
+            <div class="d-flex justify-between align-center">
+              <span class="font-semibold text-sm">${title}</span>
+              <span class="text-sm" style="color: var(--text-secondary); font-size: 0.72rem;">${dateStr}</span>
+            </div>
+            <p class="text-sm mb-0" style="color: var(--text-secondary);">${desc}</p>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

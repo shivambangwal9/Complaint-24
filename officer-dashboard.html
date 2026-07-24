@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Officer Dashboard - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Dashboard specific layout */
+    .dashboard-layout { display: flex; gap: 2rem; }
+    .sidebar { width: 250px; flex-shrink: 0; }
+    .main-content { flex-grow: 1; }
+    .stat-card { text-align: center; padding: 1.5rem 1rem; }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); line-height: 1; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+  
+  <main>
+    <div class="container dashboard-layout">
+      
+      <aside class="sidebar">
+        <div class="card" style="position: sticky; top: calc(var(--nav-height) + 2rem);">
+          <div class="text-center mb-6 pb-6" style="border-bottom: 1px solid var(--border-color);">
+            <div id="profile-initials" style="width: 64px; height: 64px; background: rgba(59, 130, 246, 0.1); color: var(--primary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; font-size: 1.5rem; font-weight: bold;">
+              OS
+            </div>
+            <h3 id="profile-name" class="text-sm">Officer Smith</h3>
+            <p id="profile-dept" class="text-sm mb-0">Public Works Dept</p>
+          </div>
+          <nav style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="#" class="btn btn-primary" style="justify-content: flex-start;">Assigned Complaints</a>
+            <a href="#" class="btn btn-outline" style="justify-content: flex-start; border: none; color: var(--text-secondary);">Resolved History</a>
+            <a href="#" class="btn btn-outline" style="justify-content: flex-start; border: none; color: var(--text-secondary);">Profile Settings</a>
+          </nav>
+        </div>
+      </aside>
+
+      <section class="main-content">
+        <h1 class="mb-6">Officer Workspace</h1>
+        
+        <div class="grid grid-cols-4 mb-8">
+          <div class="card stat-card">
+            <div class="stat-number">12</div>
+            <div class="text-sm text-secondary font-semibold">Assigned</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-number" style="color: var(--accent-alert);">3</div>
+            <div class="text-sm text-secondary font-semibold">Urgent</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-number" style="color: var(--secondary-color);">5</div>
+            <div class="text-sm text-secondary font-semibold">In Progress</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-number" style="color: var(--accent-success);">45</div>
+            <div class="text-sm text-secondary font-semibold">Resolved (Month)</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div class="d-flex justify-between align-center p-4" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 1rem;">
+            <h2 class="text-lg mb-0">Active Complaints</h2>
+            <div class="d-flex gap-2 align-center">
+              <select id="filterStatus" class="form-control" style="width: auto; padding: 0.25rem 2rem 0.25rem 0.5rem;" onchange="renderTable()">
+                <option value="All">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+              <select id="filterPriority" class="form-control" style="width: auto; padding: 0.25rem 2rem 0.25rem 0.5rem;" onchange="renderTable()">
+                <option value="All">All Priorities</option>
+                <option value="Urgent">Urgent Only</option>
+                <option value="High">High Priority</option>
+                <option value="Normal">Normal</option>
+              </select>
+              <button class="btn btn-outline text-sm" style="padding: 0.35rem 0.75rem;" onclick="exportDataToCSV()">Export CSV</button>
+            </div>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead style="background-color: rgba(255, 255, 255, 0.05);">
+              <tr>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">ID & Title</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">Category</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">Priority</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color);">Status</th>
+                <th style="padding: 1rem; border-bottom: 1px solid var(--border-color); text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="complaintTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Update Modal -->
+  <div id="updateModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="card" style="width: 100%; max-width: 500px;">
+      <h2 class="mb-4">Update Status</h2>
+      <form id="updateForm">
+        <input type="hidden" id="updateId">
+        <div class="form-group">
+          <label class="form-label">New Status</label>
+          <select id="updateStatus" class="form-control" required>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Officer Remarks</label>
+          <textarea id="updateRemarks" class="form-control" placeholder="Describe the action taken..." required></textarea>
+        </div>
+        <div class="d-flex justify-between mt-6">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('citizen_user'));
+      if (user) {
+        if (document.getElementById('profile-name')) document.getElementById('profile-name').textContent = user.name;
+        if (document.getElementById('profile-dept')) document.getElementById('profile-dept').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1) + ' Dashboard';
+        if (document.getElementById('profile-initials')) {
+          const initials = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+          document.getElementById('profile-initials').textContent = initials;
+        }
+      }
+      renderTable();
+    });
+
+    async function renderTable() {
+      let complaints = [];
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', { cache: 'no-store' });
+        complaints = await response.json();
+      } catch (err) {
+        console.error("Failed to fetch complaints", err);
+      }
+      
+      const tbody = document.getElementById('complaintTableBody');
+      tbody.innerHTML = '';
+
+      const filterStatus = document.getElementById('filterStatus').value;
+      const filterPriority = document.getElementById('filterPriority').value;
+
+      // Filter logic
+      const activeComplaints = complaints.filter(c => {
+        let matchStatus = filterStatus === 'All' ? true : c.status === filterStatus;
+        if (filterStatus === 'All' && c.status === 'Resolved') matchStatus = false; // Hide resolved by default if 'All' is selected for a cleaner workspace
+        
+        let matchPriority = filterPriority === 'All' ? true : c.priority === filterPriority;
+        return matchStatus && matchPriority;
+      });
+
+      activeComplaints.forEach(c => {
+        let pClass = 'badge-pending';
+        if (c.priority === 'Urgent') pClass = 'badge-urgent';
+        if (c.priority === 'High') pClass = 'badge-progress';
+
+        let sClass = 'badge-pending';
+        if (c.status === 'In Progress') sClass = 'badge-progress';
+
+        // Check Escalation
+        const sla = new Date(new Date(c.date).getTime() + (2 * 24 * 60 * 60 * 1000));
+        const isEscalated = (new Date() > sla);
+        const escIndicator = isEscalated ? `<span style="color: var(--accent-alert); font-size: 0.75rem; display: block; margin-top: 0.25rem;">&#9888; Escalated</span>` : '';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+            <div class="font-semibold text-primary">${c.id}</div>
+            <div class="text-sm">${c.title}</div>
+            ${escIndicator}
+          </td>
+          <td style="padding: 1rem; border-bottom: 1px solid var(--border-color);">${c.category}</td>
+          <td style="padding: 1rem; border-bottom: 1px solid var(--border-color);"><span class="badge ${pClass}">${c.priority}</span></td>
+          <td style="padding: 1rem; border-bottom: 1px solid var(--border-color);"><span class="badge ${sClass}">${c.status}</span></td>
+          <td style="padding: 1rem; border-bottom: 1px solid var(--border-color); text-align: right;">
+            <button class="btn btn-outline text-sm" style="padding: 0.25rem 0.5rem;" onclick="openModal('${c.id}', '${c.status}')">Update</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(id, currentStatus) {
+      document.getElementById('updateId').value = id;
+      document.getElementById('updateStatus').value = currentStatus;
+      document.getElementById('updateModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('updateModal').style.display = 'none';
+      document.getElementById('updateRemarks').value = '';
+    }
+
+    document.getElementById('updateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('updateId').value;
+      const newStatus = document.getElementById('updateStatus').value;
+      const remarks = document.getElementById('updateRemarks').value;
+
+      try {
+        const response = await fetch(window.API_BASE + `/api/complaints/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            remarks: remarks,
+            resolvedDate: newStatus === 'Resolved' ? new Date().toISOString() : null
+          })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+          alert('Complaint updated successfully!');
+          closeModal();
+          renderTable();
+        } else {
+          alert('Failed to update complaint.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Server error updating complaint.');
+      }
+    });
+
+    async function exportDataToCSV() {
+      let complaints = [];
+      try {
+        const response = await fetch(window.API_BASE + '/api/complaints', { cache: 'no-store' });
+        complaints = await response.json();
+      } catch (err) {
+        alert("Failed to load complaints");
+        return;
+      }
+      
+      if (!complaints.length) {
+        alert("No data to export.");
+        return;
+      }
+      const headers = ['ID', 'Title', 'Category', 'Priority', 'Status', 'Date', 'Department'];
+      const csvRows = [headers.join(',')];
+      
+      complaints.forEach(c => {
+        const row = [
+          c.id,
+          `"${c.title.replace(/"/g, '""')}"`,
+          `"${c.category}"`,
+          c.priority,
+          c.status,
+          c.date,
+          `"${c.department}"`
+        ];
+        csvRows.push(row.join(','));
+      });
+      
+      const blob = new Blob([csvRows.join('\\n')], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'officer_complaints.csv');
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback - Complain 24</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    x .star-rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .star-rating input {
+      display: none;
+    }
+
+    .star-rating label {
+      font-size: 2.5rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .star-rating label:hover,
+    .star-rating label:hover~label,
+    .star-rating input:checked~label {
+      color: #f59e0b;
+      /* Orange/Gold */
+    }
+  </style>
+</head>
+
+<body style="background-color: var(--bg-color);">
+  <!-- Navbar injected by JS -->
+
+  <main
+    style="display: flex; align-items: center; justify-content: center; min-height: calc(100vh - var(--nav-height) - 100px);">
+    <div class="container" style="max-width: 600px;">
+
+      <div class="card" id="feedbackFormCard" style="padding: 2.5rem;">
+        <div class="text-center mb-6">
+          <h1 class="text-lg" style="font-size: 1.5rem;">Rate Our Service</h1>
+          <p class="text-sm">How satisfied are you with the resolution of your complaint?</p>
+        </div>
+
+        <form id="feedbackForm">
+          <div class="form-group text-center mb-6">
+            <div class="star-rating">
+              <input type="radio" id="star5" name="rating" value="5" required />
+              <label for="star5" title="5 stars">&#9733;</label>
+              <input type="radio" id="star4" name="rating" value="4" />
+              <label for="star4" title="4 stars">&#9733;</label>
+              <input type="radio" id="star3" name="rating" value="3" />
+              <label for="star3" title="3 stars">&#9733;</label>
+              <input type="radio" id="star2" name="rating" value="2" />
+              <label for="star2" title="2 stars">&#9733;</label>
+              <input type="radio" id="star1" name="rating" value="1" />
+              <label for="star1" title="1 star">&#9733;</label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="comments">Additional Comments (Optional)</label>
+            <textarea id="comments" class="form-control" placeholder="Tell us how we can improve..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Submit Feedback</button>
+        </form>
+      </div>
+
+      <div class="card text-center" id="thankYouCard" style="display: none; padding: 4rem 2rem;">
+        <div
+          style="width: 64px; height: 64px; background: #d1fae5; color: var(--accent-success); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <h2>Thank You!</h2>
+        <p class="text-secondary">Your feedback has been submitted successfully.</p>
+        <a href="index.html" class="btn btn-outline mt-4">Return Home</a>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const complaintId = urlParams.get('id');
+      const user = JSON.parse(localStorage.getItem('citizen_user')) || {};
+      const rating = document.querySelector('input[name="rating"]:checked').value;
+      const comments = document.getElementById('comments').value;
+
+      try {
+        const response = await fetch(window.API_BASE + '/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            complaint_id: complaintId,
+            user_id: user.id || null,
+            rating: parseInt(rating),
+            comments: comments
+          })
+        });
+        const result = await response.json();
+        if (result.success) {
+          document.getElementById('feedbackFormCard').style.display = 'none';
+          document.getElementById('thankYouCard').style.display = 'block';
+        } else {
+          alert('Error submitting feedback: ' + result.error);
+        }
+      } catch (err) {
+        console.error(err);
+        // Fallback to show thank you UI even if backend fails or database is offline
+        document.getElementById('feedbackFormCard').style.display = 'none';
+        document.getElementById('thankYouCard').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+
+</html>
